@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev2"
@@ -19,15 +20,26 @@ type IDataDetail interface {
 type IItemModel interface {
 	IModel
 	IBody
+	GetId() int
+	IsNew() bool
 	CanRead(user IUserModel) bool
 	CanWrite(user IUserModel) bool
 	CanDelete(user IUserModel) bool
 }
 
 type ItemModel struct {
-	Model `xorm:"extends"`
+	Model    `xorm:"-"`
+	Id       int       `json:"id,omitempty" xorm:"pk autoincr"`
+	CreateAt time.Time `json:"create_at,omitempty" xorm:"created"`
+	UpdateAt time.Time `json:"-" xorm:"updated"`
 }
 
+func (this *ItemModel) GetId() int {
+	return this.Id
+}
+func (this *ItemModel) IsNew() bool {
+	return this.Id < 1
+}
 func (this *ItemModel) CanRead(user IUserModel) bool {
 	return true
 }
@@ -63,6 +75,13 @@ func (this *ItemModel) GetCurrentUserId(user_id int) int {
 	return 0
 }
 
+// @path
+func (this *ItemModel) GetSearchData(condition ISearch, call func(session *xorm.Session)) (interface{}, error) {
+	bean := this.Self().New()
+	user, _ := this.GetUser()
+	return GetSearchData(this.Db, user, bean, condition, call)
+}
+
 // 查看详情
 func (this *ItemModel) Info(id int) (interface{}, error) {
 	data := this.Self().New().(IItemModel)
@@ -89,9 +108,7 @@ func (this *ItemModel) Delete(id int) (int64, error) {
 
 // 查找
 func (this *ItemModel) Search(condition *SearchPage) (interface{}, error) {
-	bean := this.Self().New()
-	user, _ := this.GetUser()
-	return GetSearchData(this.Db, user, bean, condition, func(session *xorm.Session) {})
+	return this.GetSearchData(condition, func(session *xorm.Session) {})
 }
 
 func ItemGetInfo(Db *xorm.Session, user IUserModel, bean IItemModel, id interface{}) (interface{}, error) {

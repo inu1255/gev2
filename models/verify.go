@@ -16,10 +16,13 @@ type IVerifyModel interface {
 
 // 验证码模型
 type VerifyModel struct {
-	Model `xorm:"extends"`
-	Title string `json:"title,omitempty" xorm:"" gev:"手机号/邮箱等"`
-	Code  string `json:"code,omitempty" xorm:"not null" gev:"验证码"`
-	Rest  int    `json:"rest,omitempty" xorm:"not null default 10" gev:"剩余验证次数"`
+	Model    `xorm:"-"`
+	Id       int       `json:"id,omitempty" xorm:"pk autoincr"`
+	Title    string    `json:"title,omitempty" xorm:"" gev:"手机号/邮箱等"`
+	Code     string    `json:"code,omitempty" xorm:"not null" gev:"验证码"`
+	Rest     int       `json:"rest,omitempty" xorm:"not null default 10" gev:"剩余验证次数"`
+	CreateAt time.Time `json:"create_at,omitempty" xorm:"created"`
+	UpdateAt time.Time `json:"-" xorm:"updated"`
 }
 
 func (this *VerifyModel) Disable() {

@@ -11,7 +11,8 @@ import (
 
 // Address Entity
 type AddressModel struct {
-	Model    `xorm:"extends"`
+	Model    `xorm:"-"`
+	Id       int    `json:"id,omitempty" xorm:"pk autoincr"`
 	Center   string `json:"center,omitempty" xorm:"" gev:"中心经纬度"`
 	Citycode string `json:"citycode,omitempty" xorm:"" gev:"城市区号"`
 	Level    string `json:"level,omitempty" xorm:"" gev:"级别"`

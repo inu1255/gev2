@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev2"
 	"github.com/inu1255/gev2/config"
@@ -14,8 +12,6 @@ type IModel interface {
 	gev2.ITable
 	gev2.IClass
 	gev2.IService
-	GetId() int
-	IsNew() bool
 	GetModel() *Model
 	NewModel(model IModel) IModel
 }
@@ -23,9 +19,6 @@ type IModel interface {
 type Model struct {
 	gev2.BaseService `json:"-" xorm:"-"`
 	Db               *xorm.Session `json:"-" xorm:"-"`
-	Id               int           `json:"id,omitempty" xorm:"pk autoincr"`
-	CreateAt         time.Time     `json:"create_at,omitempty" xorm:"created"`
-	UpdateAt         time.Time     `json:"-" xorm:"updated"`
 }
 
 func (this *Model) Before(ctx *gev2.Context) bool {
@@ -36,12 +29,6 @@ func (this *Model) Before(ctx *gev2.Context) bool {
 func (this *Model) Finish(err interface{}) {
 	this.Db.Close()
 	this.BaseService.Finish(err)
-}
-func (this *Model) GetId() int {
-	return this.Id
-}
-func (this *Model) IsNew() bool {
-	return this.Id < 1
 }
 func (this *Model) GetModel() *Model {
 	return this

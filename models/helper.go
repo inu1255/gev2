@@ -3,12 +3,24 @@ package models
 import (
 	"reflect"
 	"strings"
+	"time"
 	"unsafe"
 
+	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev2/config"
 )
 
 var Log = config.NewLogger("gev2.models")
+
+// 返回只读 session
+func Rdb() *xorm.Session {
+	return config.Rdb()
+}
+
+func Today() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+}
 
 func Str2bytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))

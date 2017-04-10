@@ -3,7 +3,7 @@ package models
 import "errors"
 
 var (
-	UserVerify IVerifyModel
+	UserVerify IVerifyModel = NewModel(new(VerifyModel)).(IVerifyModel)
 )
 
 type IUserRegistModel interface {

@@ -118,3 +118,16 @@ func (this *SearchPage) GetOrderDefault(session *xorm.Session, default_order str
 		}
 	}
 }
+
+type SearchKeyword struct {
+	SearchPage
+	Keyword string `json:"keyword,omitempty" gev:"关键词"`
+}
+
+func (this *SearchKeyword) GetWordLike() string {
+	return WordLike(this.Keyword)
+}
+
+func (this *SearchKeyword) GetCharLike() string {
+	return CharLike(this.Keyword)
+}

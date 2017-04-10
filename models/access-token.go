@@ -10,8 +10,11 @@ import (
 )
 
 type AccessToken struct {
-	Model     `xorm:"extends"`
+	Model     `xorm:"-"`
+	Id        int       `json:"id,omitempty" xorm:"pk autoincr"`
 	Token     string    `gev:"身份密钥" json:"token,omitempty" xorm:"index"`
+	CreateAt  time.Time `json:"create_at,omitempty" xorm:"created"`
+	UpdateAt  time.Time `json:"-" xorm:"updated"`
 	ExpiredAt time.Time `gev:"过期时间" json:"expired_at,omitempty" xorm:"index"`
 	UserId    int       `json:"-" xorm:""`
 	Ip        string    `json:"-" xorm:""`

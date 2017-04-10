@@ -153,7 +153,7 @@ func GetFuncDecl(m reflect.Method) (funcDecl *ast.FuncDecl) {
 			for _, decl := range f.Decls {
 				if fun, ok := decl.(*ast.FuncDecl); ok {
 					if fun.Name.Name == methodName {
-						if len(fun.Recv.List) > 0 {
+						if fun.Recv != nil && len(fun.Recv.List) > 0 {
 							if starExpr, ok := fun.Recv.List[0].Type.(*ast.StarExpr); ok {
 								if index, ok := starExpr.X.(*ast.Ident); ok {
 									if index.Name == structName {

@@ -11,12 +11,22 @@ import (
 )
 
 var (
-	Db, _       = xorm.NewEngine("mysql", "root:199337@/youyue?parseTime=true&loc=Asia%2FShanghai")
+	Db          *xorm.Engine
+	session     *xorm.Session
 	TokenExpire = 86400
 )
 
 func SetDb(driverName, dataSourceName string) {
-	Db, _ = xorm.NewEngine(driverName, dataSourceName)
+	var err error
+	Db, err = xorm.NewEngine(driverName, dataSourceName)
+	if err == nil {
+		session = Db.NewSession()
+	}
+}
+
+// 返回只读 session
+func Rdb() *xorm.Session {
+	return session
 }
 
 func NewLogger(name string) *log.Logger {
