@@ -25,6 +25,10 @@ type VerifyModel struct {
 	UpdateAt time.Time `json:"-" xorm:"updated"`
 }
 
+func (this *VerifyModel) TableName() string {
+	return "verify"
+}
+
 func (this *VerifyModel) Disable() {
 	if this.Id > 0 {
 		this.Rest = 0

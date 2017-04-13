@@ -244,7 +244,7 @@ func convertMethodParams(router swaggin.ISwagRouter, m reflect.Method) (int, str
 				call[i] = newQueryFloat64(paramName)
 			}
 			params = append(params, methodParams[i])
-		case reflect.Struct, reflect.Ptr, reflect.Slice:
+		case reflect.Struct, reflect.Ptr, reflect.Slice, reflect.Map:
 			if flag == 1 {
 				flag = -1
 				break

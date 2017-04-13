@@ -6,6 +6,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/go-xorm/core"
+
 	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev2/config"
 )
@@ -77,4 +79,40 @@ func (this *ApiError) Code() int {
 
 func ApiErr(msg string, code int) error {
 	return &ApiError{code: code, msg: msg}
+}
+
+func WalkField(v reflect.Value, call func(reflect.StructField, reflect.Value) bool) {
+	switch v.Kind() {
+	case reflect.Struct:
+		t := v.Type()
+		numField := t.NumField()
+		for i := 0; i < numField; i++ {
+			value := v.Field(i)
+			if call(t.Field(i), value) {
+				WalkField(value, call)
+			}
+		}
+	case reflect.Interface, reflect.Ptr:
+		if !v.IsNil() {
+			WalkField(v.Elem(), call)
+		}
+	}
+}
+
+func GetPk(bean interface{}) core.PK {
+	pk := make(core.PK, 0)
+	if bean != nil {
+		WalkField(reflect.ValueOf(bean), func(field reflect.StructField, value reflect.Value) bool {
+			s := field.Tag.Get("xorm")
+			if strings.Contains(s, "pk") {
+				// Log.Println(field.Name, value.Interface())
+				pk = append(pk, value.Interface())
+			}
+			if strings.Contains(s, "extends") {
+				return true
+			}
+			return false
+		})
+	}
+	return pk
 }

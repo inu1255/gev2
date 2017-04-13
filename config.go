@@ -2,8 +2,9 @@ package gev2
 
 import (
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/inu1255/go-swagger/core"
 
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
@@ -24,19 +25,7 @@ func init() {
 	App.Use(gin.Logger())
 	App.Use(gin.Recovery())
 	_gev_path = config.GetPkgPath()
-	CopySwagger()
-}
-
-func CopySwagger() {
-	if info, err := os.Stat("api"); err != nil || !info.IsDir() {
-		cmd := exec.Command("cp", "-R", _gev_path+"/api", "api")
-		err := cmd.Start()
-		if err != nil {
-			Log.Println(err)
-		}
-	} else {
-		Log.Println("swagger文件夹已经存在")
-	}
+	core.CopySwagger()
 }
 
 func Description(info ...string) {
@@ -49,7 +38,7 @@ func Run(host string) {
 	}
 	Swag.WriteJson("api/swagger.json")
 
-	config.Db.ShowSQL(true)
+	// config.Db.ShowSQL(true)
 	if strings.HasPrefix(os.Args[0], os.TempDir()) {
 		Log.Println("go run 不启动热更新", os.Args[0])
 		App.Run(host)

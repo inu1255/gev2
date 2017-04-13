@@ -8,7 +8,7 @@ var (
 
 type IUserRegistModel interface {
 	IUserRoleModel
-	RegistorJudge(rbody *RegistorBody) error
+	RegisterJudge(rbody *RegisterBody) error
 }
 
 type UserRegistModel struct {
@@ -16,7 +16,7 @@ type UserRegistModel struct {
 }
 
 // 默认注册数据结构
-type RegistorBody struct {
+type RegisterBody struct {
 	Code     string `json:"code,omitempty" xorm:""`
 	Telphone string `json:"telphone,omitempty" xorm:""`
 	Password string `json:"password,omitempty" xorm:""`
@@ -33,7 +33,7 @@ func (this *UserRegistModel) JudgeChpwdCode2(code string) error {
 	return nil
 }
 
-func (this *UserRegistModel) RegistorJudge(rbody *RegistorBody) error {
+func (this *UserRegistModel) RegisterJudge(rbody *RegisterBody) error {
 	bean := this.Self()
 	ok, _ := this.Db.Where("telphone=?", rbody.Telphone).Get(bean)
 	if ok {
@@ -46,12 +46,12 @@ func (this *UserRegistModel) RegistorJudge(rbody *RegistorBody) error {
 }
 
 // 注册
-func (this *UserRegistModel) Registor(rbody *RegistorBody) (*LoginData, error) {
+func (this *UserRegistModel) Register(rbody *RegisterBody) (*LoginData, error) {
 	if UserVerify == nil {
 		return nil, ApiErr("系统禁止注册", 0)
 	}
 	bean := this.Self().(IUserRegistModel)
-	if err := bean.RegistorJudge(rbody); err != nil {
+	if err := bean.RegisterJudge(rbody); err != nil {
 		return nil, err
 	}
 	this.Telphone = rbody.Telphone

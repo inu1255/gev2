@@ -12,20 +12,17 @@ import (
 
 var (
 	Db          *xorm.Engine
-	session     *xorm.Session
 	TokenExpire = 86400
 )
 
 func SetDb(driverName, dataSourceName string) {
-	var err error
-	Db, err = xorm.NewEngine(driverName, dataSourceName)
-	if err == nil {
-		session = Db.NewSession()
-	}
+	Db, _ = xorm.NewEngine(driverName, dataSourceName)
 }
 
 // 返回只读 session
 func Rdb() *xorm.Session {
+	session := Db.NewSession()
+	session.IsAutoClose = true
 	return session
 }
 

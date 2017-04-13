@@ -15,7 +15,7 @@ func searchData(session *xorm.Session, bean interface{}, condition ISearch, sess
 	total, _ := session.Count(bean)
 	sessionFunc(session)
 	session.Limit(condition.GetSize(), condition.GetBegin())
-	condition.GetOrderDefault(session, "-id")
+	condition.GetOrder(session)
 	data := make([]interface{}, condition.GetSize())
 	n := 0
 	err := session.Iterate(bean, func(i int, item interface{}) error {
@@ -32,7 +32,7 @@ func GetSearchData(session *xorm.Session, user IUserModel, bean interface{}, con
 		total, _ := session.Count(data)
 		sessionFunc(session)
 		session.Limit(condition.GetSize(), condition.GetBegin())
-		condition.GetOrderDefault(session, "-id")
+		condition.GetOrder(session)
 		data := make([]interface{}, condition.GetSize())
 		n := 0
 		err := session.Iterate(bean, func(i int, item interface{}) error {
@@ -57,7 +57,6 @@ type ISearch interface {
 	GetSize() int
 	SetDefaultOrder(o string)
 	GetOrder(session *xorm.Session)
-	GetOrderDefault(session *xorm.Session, default_order string)
 }
 
 // 分页查询
@@ -87,26 +86,6 @@ func (this *SearchPage) SetDefaultOrder(o string) {
 func (this *SearchPage) GetOrder(session *xorm.Session) {
 	if this.OrderBy != "" {
 		orders := strings.Split(this.OrderBy, ",")
-		for _, item := range orders {
-			if item != "" {
-				if item[:1] == "-" && item[:1] != "" {
-					session.Desc(item[1:])
-				} else {
-					session.Asc(item)
-				}
-			}
-		}
-	} else {
-		session.Desc("id")
-	}
-}
-
-func (this *SearchPage) GetOrderDefault(session *xorm.Session, default_order string) {
-	if this.OrderBy != "" {
-		default_order = this.OrderBy
-	}
-	if default_order != "" {
-		orders := strings.Split(default_order, ",")
 		for _, item := range orders {
 			if item != "" {
 				if item[:1] == "-" && item[:1] != "" {

@@ -28,7 +28,7 @@ type IItemModel interface {
 }
 
 type ItemModel struct {
-	Model    `xorm:"-"`
+	Model    `json:"-" xorm:"-"`
 	Id       int       `json:"id,omitempty" xorm:"pk autoincr"`
 	CreateAt time.Time `json:"create_at,omitempty" xorm:"created"`
 	UpdateAt time.Time `json:"-" xorm:"updated"`

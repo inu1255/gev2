@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/go-xorm/xorm"
-	"github.com/inu1255/gev/libs"
+	"github.com/inu1255/gev2/libs"
 )
 
 type IFileModel interface {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,7 +54,13 @@ func (this *UserModel) CanWrite(user IUserModel) bool {
 	if this.Id == user.GetId() {
 		return true
 	}
-	return this.ItemRoleModel.CanWrite(user)
+	if u, ok := user.(IUserRoleModel); ok && u.IsAdmin() {
+		return true
+	}
+	if this.OwnerId == user.GetId() {
+		return true
+	}
+	return false
 }
 
 // 添加者/管理员 才能删除
@@ -64,9 +71,10 @@ func (this *UserModel) CanDelete(user IUserModel) bool {
 //  save时对密码进行加密
 func (this *UserModel) CopyTo(user IUserModel, bean interface{}) error {
 	data := bean.(*UserModel)
+	data.Id = this.Id
 	data.Nickname = this.Nickname
-	data.Telphone = this.Telphone
-	data.Password = this.Self().(IUserModel).EncodePwd(this.Password)
+	// data.Telphone = this.Telphone
+	// data.Password = this.Self().(IUserModel).EncodePwd(this.Password)
 	return nil
 }
 
@@ -110,10 +118,6 @@ func (this *UserModel) JudgeChpwdCode(code string) error {
 func (this *UserModel) MakeLoginData(action string) (*LoginData, error) {
 	access := NewAccessToken(this.Id, this.Ctx.Context)
 	access.Action = action
-	if data, ok := this.Self().(IDataDetail); ok {
-		data.GetDetail(this.Self().(IUserModel))
-		return &LoginData{access, data}, nil
-	}
 	if _, err := this.Db.InsertOne(access); err != nil {
 		return nil, err
 	}
@@ -124,6 +128,10 @@ func (this *UserModel) MakeLoginData(action string) (*LoginData, error) {
 	case "chpwd":
 		// 注销所有
 		this.Db.Exec("update access_token set expired_at='1993-03-07' where id!=? and user_id=?", access.Id, access.UserId)
+	}
+	if data, ok := this.Self().(IDataDetail); ok {
+		data.GetDetail(this.Self().(IUserModel))
+		return &LoginData{access, data}, nil
 	}
 	return &LoginData{access, this.Self()}, nil
 }
@@ -156,7 +164,7 @@ func (this *UserModel) Login(telphone, password string) (*LoginData, error) {
 }
 
 // 修改密码
-func (this *UserModel) ChangePassword(rbody *RegistorBody) (*LoginData, error) {
+func (this *UserModel) ChangePassword(rbody *RegisterBody) (*LoginData, error) {
 	bean := this.Self().(IUserModel)
 	if len(rbody.Password) < 6 || len(rbody.Password) > 32 {
 		return nil, errors.New("请输入6~32位密码")
@@ -191,7 +199,7 @@ func UserMW(user IUserModel) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 当前登录用户数据
 		token := c.Query("access_token")
-		if token != "" {
+		if c.Request.Method != http.MethodOptions && token != "" {
 			now := time.Now()
 			bean := user.New()
 			ok, _ := config.Db.Where("id in (select user_id from access_token where token=? and expired_at>?)", token, now).Get(bean)

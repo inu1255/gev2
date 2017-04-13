@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -68,7 +67,7 @@ func stack() []byte {
 func CrossDomainMW() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		if origin != "" && strings.Index(origin, c.Request.Header.Get("host")) < 0 {
+		if origin != "" {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
 			c.Header("Access-Control-Allow-Headers", "x-auth-token,x-device,x-uuid,content-type")
