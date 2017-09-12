@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
-	swaggin "github.com/inu1255/go-swagger/gin"
 )
 
 type Context struct {
@@ -67,7 +66,7 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gin.HandlerFunc {
 }
 
 func Bind(prefix string, service interface{}, summary ...string) {
-	router := swaggin.NewRouter(App.Group(prefix), summary...)
+	router := NewRouter(App.Group(prefix), summary...)
 	t := reflect.TypeOf(service)
 	numMethod := t.NumMethod()
 	var instCall convertFunc

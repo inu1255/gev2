@@ -4,9 +4,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/inu1255/gev2/config"
-
 	"github.com/go-xorm/xorm"
+	"github.com/inu1255/gev2/config"
 )
 
 // Address Entity
@@ -46,7 +45,7 @@ var _pkg_path = config.GetPkgPath()
 
 // 导入地址数据
 func (this *AddressModel) LoadSql() ([]sql.Result, error) {
-	Db := this.Db.Engine
+	Db := config.Db
 	if ok, err := Db.IsTableEmpty(this); err == nil {
 		if ok {
 			res, err := Db.ImportFile(_pkg_path + "/address.sql")

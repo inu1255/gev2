@@ -22,7 +22,6 @@ func SetDb(driverName, dataSourceName string) {
 // 返回只读 session
 func Rdb() *xorm.Session {
 	session := Db.NewSession()
-	session.IsAutoClose = true
 	return session
 }
 

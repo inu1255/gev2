@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/inu1255/go-swagger/core"
-	swaggin "github.com/inu1255/go-swagger/gin"
 )
 
 type MethodParser struct {
@@ -34,6 +33,7 @@ func (this *MethodParser) ReadComment() {
 	lines := strings.Split(doc.Text(), "\n")
 	for _, line := range lines {
 		var ss []string
+		// @param paramName paramDesc paramIn
 		ss = strings.Split(line, "@param")
 		if len(ss) > 1 {
 			ss = strings.Fields(ss[1])
@@ -102,7 +102,7 @@ func (this *MethodParser) GetMethodParams() []*core.Param {
 	return params
 }
 
-func (this *MethodParser) ParseToRouter(router swaggin.ISwagRouter) {
+func (this *MethodParser) ParseToRouter(router ISwagRouter) {
 	if this.info == nil {
 		this.ReadComment()
 	}

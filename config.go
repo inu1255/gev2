@@ -9,15 +9,13 @@ import (
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
 	"github.com/inu1255/gev2/config"
-	swaggin "github.com/inu1255/go-swagger/gin"
 )
 
 var (
 	App       = gin.New()
-	Swag      = swaggin.Swag
 	Log       = config.NewLogger("gev2")
 	_gev_path = ""
-	// UserVerify   IVerifyModel
+	ccFs      = make([]ccF, 0, 2)
 )
 
 func init() {

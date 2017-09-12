@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/inu1255/go-swagger/core"
-	swaggin "github.com/inu1255/go-swagger/gin"
 )
 
 type convertFunc func(*Context) reflect.Value
+type ccF func(paramIn, paramName string, kind reflect.Kind) (convertFunc, bool)
 
 // only new
 func newInstCall(t reflect.Type) convertFunc {
@@ -174,7 +174,7 @@ func nameToRoute(from string) string {
 	}
 	return strings.ToLower(from)
 }
-func convertMethodParams(router swaggin.ISwagRouter, m reflect.Method) (int, string, []convertFunc) {
+func convertMethodParams(router ISwagRouter, m reflect.Method) (int, string, []convertFunc) {
 	numOut := m.Type.NumOut()
 	// Log.Println(m.Func, m.Name, m.Type)
 	if numOut != 2 || m.Type.Out(1).Kind() != reflect.Interface || errorType.Implements(m.Type.Out(1)) {
@@ -203,84 +203,95 @@ func convertMethodParams(router swaggin.ISwagRouter, m reflect.Method) (int, str
 		} else {
 			paramName = methodParams[i].Name
 		}
-		switch m.Type.In(i).Kind() {
-		case reflect.String:
-			if methodParams[i].In == "path" {
-				path += "/:" + paramName
-				call[i] = newString(paramName)
-			} else {
-				call[i] = newQueryString(paramName)
-			}
-			params = append(params, methodParams[i])
-		case reflect.Int:
-			if methodParams[i].In == "path" {
-				path += "/:" + paramName
-				call[i] = newInt(paramName)
-			} else {
-				call[i] = newQueryInt(paramName)
-			}
-			params = append(params, methodParams[i])
-		case reflect.Int64:
-			if methodParams[i].In == "path" {
-				path += "/:" + paramName
-				call[i] = newInt64(paramName)
-			} else {
-				call[i] = newQueryInt64(paramName)
-			}
-			params = append(params, methodParams[i])
-		case reflect.Float32:
-			if methodParams[i].In == "path" {
-				path += "/:" + paramName
-				call[i] = newFloat32(paramName)
-			} else {
-				call[i] = newQueryFloat32(paramName)
-			}
-			params = append(params, methodParams[i])
-		case reflect.Float64:
-			if methodParams[i].In == "path" {
-				path += "/:" + paramName
-				call[i] = newFloat64(paramName)
-			} else {
-				call[i] = newQueryFloat64(paramName)
-			}
-			params = append(params, methodParams[i])
-		case reflect.Struct, reflect.Ptr, reflect.Slice, reflect.Map:
-			if flag == 1 {
-				flag = -1
+		// custom convertFunc
+		var cf convertFunc
+		for j := len(ccFs) - 1; j >= 0; j-- {
+			if cf, ok := ccFs[j](methodParams[i].In, paramName, m.Type.In(i).Kind()); ok {
+				call[i] = cf
 				break
-			} else if m.Type.In(i).Kind() == reflect.Slice && m.Type.In(i).Elem().Kind() == reflect.Interface && methodParams[i].Name == "self" {
-				typ := reflect.SliceOf(m.Type.In(0))
-				call[i] = newJsonArrayCall(typ, m.Type.In(i))
-				router.Body(reflect.New(typ).Interface())
-			} else if m.Type.In(i).String() == "*multipart.FileHeader" {
-				methodParams[i].In = "formData"
-				methodParams[i].Type = "file"
-				methodParams[i].AllowMultiple = true
-				params = append(params, methodParams[i])
-				call[i] = newMultiFile(paramName)
-			} else {
-				typ := m.Type.In(i)
-				call[i] = newJsonCall(typ)
-				router.Body(reflect.New(typ).Interface())
 			}
-			flag = 1
-		case reflect.Interface:
-			if methodParams[i].Name == "self" {
+		}
+		// default convertFunc
+		if cf == nil {
+			switch m.Type.In(i).Kind() {
+			case reflect.String:
+				if methodParams[i].In == "path" {
+					path += "/:" + paramName
+					call[i] = newString(paramName)
+				} else {
+					call[i] = newQueryString(paramName)
+				}
+				params = append(params, methodParams[i])
+			case reflect.Int:
+				if methodParams[i].In == "path" {
+					path += "/:" + paramName
+					call[i] = newInt(paramName)
+				} else {
+					call[i] = newQueryInt(paramName)
+				}
+				params = append(params, methodParams[i])
+			case reflect.Int64:
+				if methodParams[i].In == "path" {
+					path += "/:" + paramName
+					call[i] = newInt64(paramName)
+				} else {
+					call[i] = newQueryInt64(paramName)
+				}
+				params = append(params, methodParams[i])
+			case reflect.Float32:
+				if methodParams[i].In == "path" {
+					path += "/:" + paramName
+					call[i] = newFloat32(paramName)
+				} else {
+					call[i] = newQueryFloat32(paramName)
+				}
+				params = append(params, methodParams[i])
+			case reflect.Float64:
+				if methodParams[i].In == "path" {
+					path += "/:" + paramName
+					call[i] = newFloat64(paramName)
+				} else {
+					call[i] = newQueryFloat64(paramName)
+				}
+				params = append(params, methodParams[i])
+			case reflect.Struct, reflect.Ptr, reflect.Slice, reflect.Map:
 				if flag == 1 {
 					flag = -1
 					break
+				} else if m.Type.In(i).Kind() == reflect.Slice && m.Type.In(i).Elem().Kind() == reflect.Interface && methodParams[i].Name == "self" {
+					typ := reflect.SliceOf(m.Type.In(0))
+					call[i] = newJsonArrayCall(typ, m.Type.In(i))
+					router.Body(reflect.New(typ).Interface())
+				} else if m.Type.In(i).String() == "*multipart.FileHeader" {
+					methodParams[i].In = "formData"
+					methodParams[i].Type = "file"
+					methodParams[i].AllowMultiple = true
+					params = append(params, methodParams[i])
+					call[i] = newMultiFile(paramName)
 				} else {
-					typ := m.Type.In(0)
+					typ := m.Type.In(i)
 					call[i] = newJsonCall(typ)
 					router.Body(reflect.New(typ).Interface())
 				}
 				flag = 1
+			case reflect.Interface:
+				if methodParams[i].Name == "self" {
+					if flag == 1 {
+						flag = -1
+						break
+					} else {
+						typ := m.Type.In(0)
+						call[i] = newJsonCall(typ)
+						router.Body(reflect.New(typ).Interface())
+					}
+					flag = 1
+				}
+			case reflect.Func:
+				call[i] = newNilCall(m.Type.In(i))
+			default:
+				Log.Println("default", i, m.Type.In(i).Kind())
+				flag = -1
 			}
-		case reflect.Func:
-			call[i] = newNilCall(m.Type.In(i))
-		default:
-			Log.Println("default", i, m.Type.In(i).Kind())
-			flag = -1
 		}
 		if flag == -1 {
 			break
